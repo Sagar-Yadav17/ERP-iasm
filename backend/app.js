@@ -9,7 +9,13 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet());
-app.use(cors({ origin: 'https://erp-iasm.vercel.app', credentials: true }));
+app.use(cors({
+    origin: [
+        'http://localhost:5173',
+        'https://erp-iasm.vercel.app',
+        'https://erp-iasm.onrender.com',
+    ], credentials: true
+}));
 app.use(morgan('dev'));
 app.use(cookieParser());
 
@@ -20,4 +26,5 @@ app.use('/api/v1/employees', require('./routes/employeeRoutes'));
 app.use('/api/v1/finance', require('./routes/financeRoutes'));
 app.use('/api/v1/attendance', require('./routes/attendanceRoutes'));
 app.use('/api/v1/inventory', require('./routes/inventoryRoutes'));
+app.use('/api/v1/dashboard', require('./routes/dashboardRoutes'));
 module.exports = app;
