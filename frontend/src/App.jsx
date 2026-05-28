@@ -7,6 +7,7 @@ import Attendance from './pages/Attendance'
 import Inventory from './pages/Inventory'
 import Reports from './pages/Reports'
 import ProtectedRoute from './components/ProtectedRoute'
+import Settings from './pages/Settings'
 
 function App() {
   return (
@@ -31,6 +32,9 @@ function App() {
         } />
         <Route path="/reports" element={
           <ProtectedRoute><Reports /></ProtectedRoute>
+        } />
+        <Route path="/settings" element={
+          <ProtectedRoute><Settings /></ProtectedRoute>
         } />
         <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>
