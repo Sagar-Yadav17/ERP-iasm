@@ -57,18 +57,18 @@ exports.createEmployee = async (req, res) => {
       const userPassword = password || 'Welcome@123';
       const hashedPassword = await bcrypt.hash(userPassword, 10);
 
-      const newUser = new User({
+      await User.collection.insertOne({
         name,
         email,
         password: hashedPassword,
         role: 'staff',
         tenantId: req.user.tenantId,
         isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
-      await newUser.save({ validateBeforeSave: false });
       console.log('User created successfully:', email);
-
     } catch (userErr) {
       console.error('USER CREATE ERROR:', userErr.message);
     }
@@ -116,16 +116,21 @@ exports.updateEmployee = async (req, res) => {
 // Delete employee
 exports.deleteEmployee = async (req, res) => {
   try {
+    const Attendance = require('../models/Attendance');
+    
     const employee = await Employee.findOneAndDelete({
       _id: req.params.id,
       tenantId: req.user.tenantId
     });
     if (!employee) return res.status(404).json({ message: 'Employee not found' });
 
-    // Delete user account bhi
+    // User account delete karo
     await User.findOneAndDelete({ email: employee.email });
+    
+    // Attendance records bhi delete karo
+    await Attendance.deleteMany({ employeeId: employee._id });
 
-    res.json({ message: 'Employee and user account deleted successfully' });
+    res.json({ message: 'Employee, user account and attendance records deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

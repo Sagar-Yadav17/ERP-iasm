@@ -28,4 +28,5 @@ app.use('/api/v1/attendance', require('./routes/attendanceRoutes'));
 app.use('/api/v1/inventory', require('./routes/inventoryRoutes'));
 app.use('/api/v1/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/v1/settings', require('./routes/settingsRoutes'));
+app.use('/api/v1/leave', require('./routes/leaveRoutes'));
 module.exports = app;

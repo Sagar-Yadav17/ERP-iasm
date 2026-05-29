@@ -2,20 +2,25 @@ import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import useAuthStore from '../store/authStore'
 
-const menuItems = [
-  { path: '/dashboard', icon: '🏠', label: 'Dashboard' },
-  { path: '/employees', icon: '👥', label: 'Employees' },
-  { path: '/attendance', icon: '📅', label: 'Attendance' },
-  { path: '/finance', icon: '💰', label: 'Finance' },
-  { path: '/inventory', icon: '📦', label: 'Inventory' },
-  { path: '/reports', icon: '📊', label: 'Reports' },
-  { path: '/settings', icon: '⚙️', label: 'Settings' },
+const allMenuItems = [
+  { path: '/dashboard', icon: '🏠', label: 'Dashboard', roles: ['superadmin', 'admin', 'staff'] },
+  { path: '/employees', icon: '👥', label: 'Employees', roles: ['superadmin', 'admin'] },
+  { path: '/attendance', icon: '📅', label: 'Attendance', roles: ['superadmin', 'admin'] },
+  { path: '/finance', icon: '💰', label: 'Finance', roles: ['superadmin', 'admin'] },
+  { path: '/inventory', icon: '📦', label: 'Inventory', roles: ['superadmin', 'admin'] },
+  { path: '/reports', icon: '📊', label: 'Reports', roles: ['superadmin', 'admin'] },
+  { path: '/my-profile', icon: '👤', label: 'My Profile', roles: ['staff'] },
+  { path: '/my-attendance', icon: '📅', label: 'My Attendance', roles: ['staff'] },
+  { path: '/apply-leave', icon: '🏖️', label: 'Apply Leave', roles: ['staff'] },
+  { path: '/settings', icon: '⚙️', label: 'Settings', roles: ['superadmin', 'admin', 'staff'] },
 ]
 
 const DashboardLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
+
+  const menuItems = allMenuItems.filter(item => item.roles.includes(user?.role))
 
   const handleLogout = () => {
     logout()
