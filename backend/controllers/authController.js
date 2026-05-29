@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const bcrypt = require('bcryptjs');
 const { generateAccessToken, generateRefreshToken } = require('../utils/generateToken');
 
 exports.register = async (req, res) => {
@@ -7,7 +8,9 @@ exports.register = async (req, res) => {
     const exists = await User.findOne({ email });
     if (exists) return res.status(400).json({ message: 'Email already exists' });
 
-    const user = await User.create({ name, email, password, role, tenantId });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({ name, email, password: hashedPassword, role, tenantId });
+
     const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
 
@@ -22,8 +25,10 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    if (!user || !(await user.matchPassword(password)))
-      return res.status(401).json({ message: 'Invalid email or password' });
+    if (!user) return res.status(401).json({ message: 'Invalid email or password' });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ message: 'Invalid email or password' });
 
     const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken(user._id);

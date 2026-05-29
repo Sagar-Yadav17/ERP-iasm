@@ -19,7 +19,8 @@ const Employees = () => {
   const [editEmployee, setEditEmployee] = useState(null)
   const [form, setForm] = useState({
     name: '', email: '', phone: '', department: 'Engineering',
-    designation: '', salary: '', joinDate: '', status: 'active', address: ''
+    designation: '', salary: '', joinDate: '', status: 'active',
+    address: '', password: ''
   })
 
   const fetchEmployees = async () => {
@@ -46,10 +47,16 @@ const Employees = () => {
         await API.put(`/employees/${editEmployee._id}`, form)
       } else {
         await API.post('/employees', form)
+        const pwd = form.password || 'Welcome@123'
+        alert(`✅ Employee created successfully!\n\nLogin Credentials:\nEmail: ${form.email}\nPassword: ${pwd}\n\nPlease share these credentials with the employee.`)
       }
       setShowModal(false)
       setEditEmployee(null)
-      setForm({ name: '', email: '', phone: '', department: 'Engineering', designation: '', salary: '', joinDate: '', status: 'active', address: '' })
+      setForm({
+        name: '', email: '', phone: '', department: 'Engineering',
+        designation: '', salary: '', joinDate: '', status: 'active',
+        address: '', password: ''
+      })
       fetchEmployees()
     } catch (err) {
       alert(err.response?.data?.message || 'Error saving employee')
@@ -62,13 +69,13 @@ const Employees = () => {
       name: emp.name, email: emp.email, phone: emp.phone,
       department: emp.department, designation: emp.designation,
       salary: emp.salary, joinDate: emp.joinDate?.split('T')[0],
-      status: emp.status, address: emp.address
+      status: emp.status, address: emp.address, password: ''
     })
     setShowModal(true)
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this employee?')) return
+    if (!confirm('Delete this employee? Their login account will also be deleted.')) return
     await API.delete(`/employees/${id}`)
     fetchEmployees()
   }
@@ -163,6 +170,13 @@ const Employees = () => {
               <h2 className="text-lg font-bold text-gray-800">{editEmployee ? 'Edit Employee' : 'Add Employee'}</h2>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
             </div>
+
+            {!editEmployee && (
+              <div className="mx-6 mt-4 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-xs text-blue-700">
+                ℹ️ A login account will be automatically created with the password you set below.
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {[
                 { label: 'Full Name', key: 'name', type: 'text' },
@@ -184,6 +198,22 @@ const Employees = () => {
                   />
                 </div>
               ))}
+
+              {/* Password — only in add mode */}
+              {!editEmployee && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">Login Password</label>
+                  <input
+                    type="text"
+                    placeholder="Leave empty for default: Welcome@123"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">Min 6 characters. Default is Welcome@123 if left empty.</p>
+                </div>
+              )}
+
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1">Department</label>
                 <select value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })}
@@ -191,6 +221,7 @@ const Employees = () => {
                   {departments.filter(d => d !== 'All').map(d => <option key={d}>{d}</option>)}
                 </select>
               </div>
+
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1">Status</label>
                 <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}
@@ -200,6 +231,7 @@ const Employees = () => {
                   <option value="on-leave">On Leave</option>
                 </select>
               </div>
+
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowModal(false)}
                   className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">
@@ -207,7 +239,7 @@ const Employees = () => {
                 </button>
                 <button type="submit"
                   className="flex-1 bg-primary text-white py-2 rounded-lg text-sm font-medium hover:bg-secondary transition">
-                  {editEmployee ? 'Update' : 'Add Employee'}
+                  {editEmployee ? 'Update Employee' : 'Add Employee'}
                 </button>
               </div>
             </form>
