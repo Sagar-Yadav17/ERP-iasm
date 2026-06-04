@@ -92,7 +92,7 @@ const Finance = () => {
 
   return (
     <DashboardLayout>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Finance</h1>
           <p className="text-gray-500 text-sm mt-1">Invoices, expenses and financial overview</p>
@@ -119,7 +119,7 @@ const Finance = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-5">
+      <div className="flex gap-2 mb-5 overflow-x-auto">
         {['invoices', 'expenses'].map(t => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-4 py-2 rounded-lg text-sm font-medium capitalize transition
@@ -131,8 +131,8 @@ const Finance = () => {
 
       {/* Invoices Table */}
       {tab === 'invoices' && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+          <table className="w-full min-w-[900px] text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 {['Invoice #', 'Client', 'Total', 'Due Date', 'Status', 'Actions'].map(h => (
@@ -176,8 +176,8 @@ const Finance = () => {
 
       {/* Expenses Table */}
       {tab === 'expenses' && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+          <table className="w-full min-w-[900px] text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 {['Title', 'Category', 'Amount', 'Date', 'Paid By', 'Actions'].map(h => (

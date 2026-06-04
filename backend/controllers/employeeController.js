@@ -1,5 +1,6 @@
 const Employee = require('../models/Employee');
 const User = require('../models/User');
+const Attendance = require('../models/Attendance');
 
 // Get all employees
 exports.getEmployees = async (req, res) => {
@@ -41,8 +42,16 @@ exports.createEmployee = async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: 'Email already registered' });
 
-    const count = await Employee.countDocuments({ tenantId: req.user.tenantId });
-    const employeeId = `EMP${String(count + 1).padStart(4, '0')}`;
+    // Smart employeeId generation
+    const lastEmployee = await Employee.findOne({ tenantId: req.user.tenantId })
+      .sort({ createdAt: -1 });
+
+    let nextNum = 1;
+    if (lastEmployee && lastEmployee.employeeId) {
+      const lastNum = parseInt(lastEmployee.employeeId.replace('EMP', ''));
+      nextNum = lastNum + 1;
+    }
+    const employeeId = `EMP${String(nextNum).padStart(4, '0')}`;
 
     const employee = await Employee.create({
       name, email, phone, department, designation,
@@ -51,7 +60,6 @@ exports.createEmployee = async (req, res) => {
       tenantId: req.user.tenantId,
     });
 
-    // User create karo
     try {
       const bcrypt = require('bcryptjs');
       const userPassword = password || 'Welcome@123';
@@ -83,25 +91,22 @@ exports.createEmployee = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-// Update employee
+
 // Update employee
 exports.updateEmployee = async (req, res) => {
   try {
-    // Pehle purana record lo
     const existing = await Employee.findOne({ _id: req.params.id, tenantId: req.user.tenantId });
     if (!existing) return res.status(404).json({ message: 'Employee not found' });
 
-    // Phir update karo
     const employee = await Employee.findOneAndUpdate(
       { _id: req.params.id, tenantId: req.user.tenantId },
       req.body,
       { new: true }
     );
 
-    // Purane email se user update karo
     await User.findOneAndUpdate(
       { email: existing.email },
-      { 
+      {
         name: req.body.name || existing.name,
         email: req.body.email || existing.email,
       }
@@ -116,22 +121,25 @@ exports.updateEmployee = async (req, res) => {
 // Delete employee
 exports.deleteEmployee = async (req, res) => {
   try {
-    const Attendance = require('../models/Attendance');
-    
-    const employee = await Employee.findOneAndDelete({
+    const employee = await Employee.findOne({
       _id: req.params.id,
       tenantId: req.user.tenantId
     });
     if (!employee) return res.status(404).json({ message: 'Employee not found' });
 
+    // Attendance delete karo
+    const deletedAtt = await Attendance.deleteMany({ employeeId: employee._id });
+    console.log('Attendance deleted:', deletedAtt.deletedCount);
+
     // User account delete karo
     await User.findOneAndDelete({ email: employee.email });
-    
-    // Attendance records bhi delete karo
-    await Attendance.deleteMany({ employeeId: employee._id });
 
-    res.json({ message: 'Employee, user account and attendance records deleted successfully' });
+    // Employee delete karo
+    await Employee.findOneAndDelete({ _id: req.params.id });
+
+    res.json({ message: 'Employee deleted successfully' });
   } catch (err) {
+    console.error('Delete error:', err);
     res.status(500).json({ message: err.message });
   }
 };

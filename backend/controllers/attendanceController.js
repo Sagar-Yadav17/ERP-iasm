@@ -9,7 +9,11 @@ exports.getAttendanceByDate = async (req, res) => {
     const start = new Date(targetDate.setHours(0, 0, 0, 0));
     const end = new Date(targetDate.setHours(23, 59, 59, 999));
 
-    const employees = await Employee.find({ tenantId: req.user.tenantId, status: { $in: ['active', 'on-leave'] } });
+    const employees = await Employee.find({
+      tenantId: req.user.tenantId,
+      status: { $in: ['active', 'on-leave'] }
+    });
+
     const records = await Attendance.find({
       tenantId: req.user.tenantId,
       date: { $gte: start, $lte: end }
@@ -23,12 +27,17 @@ exports.getAttendanceByDate = async (req, res) => {
       };
     });
 
+    const activeEmpIds = employees.map(e => e._id.toString());
+    const activeRecords = records.filter(r =>
+      activeEmpIds.includes(r.employeeId?._id?.toString())
+    );
+
     const summary = {
       total: employees.length,
-      present: records.filter(r => r.status === 'present').length,
-      absent: records.filter(r => r.status === 'absent').length,
-      late: records.filter(r => r.status === 'late').length,
-      onLeave: records.filter(r => r.status === 'on-leave').length,
+      present: activeRecords.filter(r => r.status === 'present').length,
+      absent: activeRecords.filter(r => r.status === 'absent').length,
+      late: activeRecords.filter(r => r.status === 'late').length,
+      onLeave: activeRecords.filter(r => r.status === 'on-leave').length,
     };
 
     res.json({ result, summary });

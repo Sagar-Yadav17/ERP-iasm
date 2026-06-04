@@ -76,7 +76,7 @@ const Inventory = () => {
 
   return (
     <DashboardLayout>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Inventory</h1>
           <p className="text-gray-500 text-sm mt-1">Manage stock and assets</p>
@@ -88,7 +88,7 @@ const Inventory = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {[
           { label: 'Total Items', value: stats.total || 0, color: 'text-gray-800', bg: 'bg-gray-50' },
           { label: 'Low Stock', value: stats.lowStock || 0, color: 'text-yellow-600', bg: 'bg-yellow-50' },
@@ -102,7 +102,7 @@ const Inventory = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-5 flex gap-4 flex-wrap">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-5 flex flex-col md:flex-row gap-4">
         <input type="text" placeholder="Search items..." value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-48 focus:outline-none focus:ring-2 focus:ring-primary" />
@@ -113,8 +113,8 @@ const Inventory = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+        <table className="w-full min-w-[900px] text-sm">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               {['Item', 'Category', 'Quantity', 'Price', 'Supplier', 'Status', 'Actions'].map(h => (
@@ -191,7 +191,7 @@ const Inventory = () => {
                   {categories.filter(c => c !== 'All').map(c => <option key={c}>{c}</option>)}
                 </select>
               </div>
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-col md:flex-row gap-3 pt-2">
                 <button type="button" onClick={() => setShowModal(false)}
                   className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg text-sm font-medium">Cancel</button>
                 <button type="submit"
