@@ -107,11 +107,14 @@ const Finance = () => {
 
   const downloadPDF = async (id, invoiceNumber) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/v1/finance/invoices/${id}/pdf`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+      const response = await fetch(
+        `https://erp-iasm.onrender.com/api/v1/finance/invoices/${id}/pdf`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+          }
         }
-      })
+      )
       if (!response.ok) throw new Error('PDF generation failed')
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
