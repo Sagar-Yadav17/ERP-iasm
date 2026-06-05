@@ -60,6 +60,7 @@ exports.createEmployee = async (req, res) => {
       tenantId: req.user.tenantId,
     });
 
+    // User account create karo
     try {
       const bcrypt = require('bcryptjs');
       const userPassword = password || 'Welcome@123';
@@ -79,6 +80,20 @@ exports.createEmployee = async (req, res) => {
       console.log('User created successfully:', email);
     } catch (userErr) {
       console.error('USER CREATE ERROR:', userErr.message);
+    }
+
+    // Activity log save karo
+    try {
+      const ActivityLog = require('../models/ActivityLog');
+      await ActivityLog.create({
+        tenantId: req.user.tenantId,
+        text: `New employee ${name} (${employeeId}) added`,
+        icon: '👤',
+        type: 'employee_added',
+        performedBy: req.user.name || req.user.email,
+      });
+    } catch (logErr) {
+      console.error('Activity log error:', logErr.message);
     }
 
     const userPassword = password || 'Welcome@123';
@@ -121,15 +136,31 @@ exports.updateEmployee = async (req, res) => {
 // Delete employee
 exports.deleteEmployee = async (req, res) => {
   try {
+    const ActivityLog = require('../models/ActivityLog');
+
     const employee = await Employee.findOne({
       _id: req.params.id,
       tenantId: req.user.tenantId
     });
     if (!employee) return res.status(404).json({ message: 'Employee not found' });
 
+    // Activity log save karo pehle
+    await ActivityLog.create({
+      tenantId: req.user.tenantId,
+      text: `Employee ${employee.name} (${employee.employeeId}) was removed`,
+      icon: '🗑️',
+      type: 'employee_deleted',
+      performedBy: req.user.name,
+    });
+
     // Attendance delete karo
-    const deletedAtt = await Attendance.deleteMany({ employeeId: employee._id });
-    console.log('Attendance deleted:', deletedAtt.deletedCount);
+    await Attendance.deleteMany({ employeeId: employee._id });
+
+    // Leave requests delete karo
+    try {
+      const LeaveRequest = require('../models/LeaveRequest');
+      await LeaveRequest.deleteMany({ employeeId: employee._id });
+    } catch (e) {}
 
     // User account delete karo
     await User.findOneAndDelete({ email: employee.email });
