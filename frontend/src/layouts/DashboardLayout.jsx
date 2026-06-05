@@ -13,6 +13,7 @@ const allMenuItems = [
   { path: '/my-attendance', icon: '📅', label: 'My Attendance', roles: ['staff'] },
   { path: '/apply-leave', icon: '🏖️', label: 'Apply Leave', roles: ['staff'] },
   { path: '/settings', icon: '⚙️', label: 'Settings', roles: ['superadmin', 'admin', 'staff'] },
+  { path: '/leave-management', icon: '📋', label: 'Leave Requests', roles: ['superadmin', 'admin'] },
 ]
 
 const DashboardLayout = ({ children }) => {

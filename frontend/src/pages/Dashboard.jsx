@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
 import DashboardLayout from '../layouts/DashboardLayout'
 import API from '../api/axios'
+import useAuthStore from '../store/authStore'
 
 const Dashboard = () => {
   const [stats, setStats] = useState({})
   const [recentActivity, setRecentActivity] = useState([])
   const [loading, setLoading] = useState(true)
+  const [isStaff, setIsStaff] = useState(false)
+  const { user } = useAuthStore()
 
   const fetchDashboard = async () => {
     try {
@@ -13,6 +16,7 @@ const Dashboard = () => {
       const { data } = await API.get('/dashboard')
       setStats(data.stats)
       setRecentActivity(data.recentActivity)
+      setIsStaff(data.isStaff || false)
     } catch (err) {
       console.error(err)
     } finally {
@@ -36,42 +40,33 @@ const Dashboard = () => {
     return `₹${amount}`
   }
 
-  const statCards = [
-    {
-      label: 'Total Employees',
-      value: loading ? '...' : stats.totalEmployees || 0,
-      icon: '👥',
-      color: 'bg-blue-50 text-blue-600',
-      sub: 'Active employees'
-    },
-    {
-      label: 'Present Today',
-      value: loading ? '...' : stats.presentToday || 0,
-      icon: '✅',
-      color: 'bg-green-50 text-green-600',
-      sub: 'Marked present'
-    },
-    {
-      label: 'Monthly Revenue',
-      value: loading ? '...' : formatRevenue(stats.monthlyRevenue || 0),
-      icon: '💰',
-      color: 'bg-yellow-50 text-yellow-600',
-      sub: 'This month'
-    },
-    {
-      label: 'Pending Invoices',
-      value: loading ? '...' : stats.pendingInvoices || 0,
-      icon: '📄',
-      color: 'bg-red-50 text-red-600',
-      sub: 'Awaiting payment'
-    },
+  // Admin stat cards
+  const adminCards = [
+    { label: 'Total Employees', value: loading ? '...' : stats.totalEmployees || 0, icon: '👥', color: 'bg-blue-50 text-blue-600', sub: 'Active employees' },
+    { label: 'Present Today', value: loading ? '...' : stats.presentToday || 0, icon: '✅', color: 'bg-green-50 text-green-600', sub: 'Marked present' },
+    { label: 'Monthly Revenue', value: loading ? '...' : formatRevenue(stats.monthlyRevenue || 0), icon: '💰', color: 'bg-yellow-50 text-yellow-600', sub: 'This month' },
+    { label: 'Pending Invoices', value: loading ? '...' : stats.pendingInvoices || 0, icon: '📄', color: 'bg-red-50 text-red-600', sub: 'Awaiting payment' },
   ]
+
+  // Staff stat cards
+  const staffCards = [
+    { label: 'Days Attended', value: loading ? '...' : stats.totalEmployees || 0, icon: '📅', color: 'bg-blue-50 text-blue-600', sub: 'This month' },
+    { label: 'Days Present', value: loading ? '...' : stats.presentToday || 0, icon: '✅', color: 'bg-green-50 text-green-600', sub: 'This month' },
+    { label: 'Pending Leaves', value: loading ? '...' : stats.pendingInvoices || 0, icon: '🏖️', color: 'bg-yellow-50 text-yellow-600', sub: 'Awaiting approval' },
+    { label: 'My Department', value: loading ? '...' : user?.role || 'Staff', icon: '👤', color: 'bg-purple-50 text-purple-600', sub: 'Your role' },
+  ]
+
+  const statCards = isStaff ? staffCards : adminCards
 
   return (
     <DashboardLayout>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-        <p className="text-gray-500 text-sm mt-1">Welcome back! Here's what's happening today.</p>
+        <h1 className="text-2xl font-bold text-gray-800">
+          {isStaff ? `Welcome, ${user?.name}! 👋` : 'Dashboard'}
+        </h1>
+        <p className="text-gray-500 text-sm mt-1">
+          {isStaff ? 'Here is your personal activity overview' : "Welcome back! Here's what's happening today."}
+        </p>
       </div>
 
       {/* Stats Grid */}
@@ -88,8 +83,8 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Low Stock Alert */}
-      {stats.lowStockItems > 0 && (
+      {/* Low Stock Alert — admin only */}
+      {!isStaff && stats.lowStockItems > 0 && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6 flex items-center gap-3">
           <span className="text-2xl">⚠️</span>
           <div>
@@ -103,17 +98,21 @@ const Dashboard = () => {
       {/* Recent Activity */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-semibold text-gray-800">Recent Activity</h2>
+          <h2 className="font-semibold text-gray-800">
+            {isStaff ? 'My Recent Activity' : 'Recent Activity'}
+          </h2>
           <button onClick={fetchDashboard} className="text-xs text-primary hover:underline">Refresh</button>
         </div>
         <div className="divide-y divide-gray-50">
           {loading ? (
             <div className="px-6 py-10 text-center text-gray-400">Loading...</div>
           ) : recentActivity.length === 0 ? (
-            <div className="px-6 py-10 text-center text-gray-400">No recent activity</div>
+            <div className="px-6 py-10 text-center text-gray-400">
+              {isStaff ? 'No recent activity. Your attendance and leave updates will appear here.' : 'No recent activity'}
+            </div>
           ) : recentActivity.map((item, i) => (
-            <div key={i} className="px-6 py-4 flex items-center gap-4">
-              <span className="text-xl">{item.icon}</span>
+            <div key={i} className="px-6 py-4 flex items-start gap-4">
+              <span className="text-xl mt-0.5">{item.icon}</span>
               <div className="flex-1">
                 <p className="text-sm text-gray-700">{item.text}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{formatTime(item.time)}</p>

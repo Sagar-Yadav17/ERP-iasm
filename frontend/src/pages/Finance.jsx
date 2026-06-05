@@ -7,6 +7,7 @@ const statusColor = {
   sent: 'bg-blue-100 text-blue-600',
   paid: 'bg-green-100 text-green-600',
   overdue: 'bg-red-100 text-red-600',
+  pending: 'bg-yellow-100 text-yellow-700',
 }
 
 const Finance = () => {
@@ -51,8 +52,7 @@ const Finance = () => {
     const items = [...invoiceForm.items]
     items[i][field] = value
     items[i].amount = items[i].quantity * items[i].rate
-    const subtotal = items.reduce((s, it) => s + it.amount, 0)
-    setInvoiceForm({ ...invoiceForm, items, subtotal })
+    setInvoiceForm({ ...invoiceForm, items })
   }
 
   const addItem = () => setInvoiceForm({
@@ -60,14 +60,28 @@ const Finance = () => {
     items: [...invoiceForm.items, { description: '', quantity: 1, rate: 0, amount: 0 }]
   })
 
-  const subtotal = invoiceForm.items.reduce((s, i) => s + i.amount, 0)
+  const subtotal = invoiceForm.items.reduce((s, i) => s + (i.quantity * i.rate), 0)
   const total = subtotal + (subtotal * invoiceForm.tax / 100)
 
   const handleInvoiceSubmit = async (e) => {
     e.preventDefault()
     try {
-      await API.post('/finance/invoices', { ...invoiceForm, subtotal, total })
+      const payload = {
+        ...invoiceForm,
+        items: invoiceForm.items.map(item => ({
+          description: item.description,
+          quantity: item.quantity,
+          price: item.rate,
+        })),
+        totalAmount: total,
+      }
+      await API.post('/finance/invoices', payload)
       setShowModal(false)
+      setInvoiceForm({
+        clientName: '', clientEmail: '', dueDate: '', status: 'draft', notes: '',
+        items: [{ description: '', quantity: 1, rate: 0, amount: 0 }],
+        tax: 0,
+      })
       fetchAll()
     } catch (err) {
       alert(err.response?.data?.message || 'Error creating invoice')
@@ -79,6 +93,7 @@ const Finance = () => {
     try {
       await API.post('/finance/expenses', expenseForm)
       setShowModal(false)
+      setExpenseForm({ title: '', amount: '', category: 'Other', date: '', description: '', paidBy: '' })
       fetchAll()
     } catch (err) {
       alert(err.response?.data?.message || 'Error adding expense')
@@ -88,6 +103,26 @@ const Finance = () => {
   const handleStatusChange = async (id, status) => {
     await API.put(`/finance/invoices/${id}`, { status })
     fetchAll()
+  }
+
+  const downloadPDF = async (id, invoiceNumber) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/v1/finance/invoices/${id}/pdf`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      })
+      if (!response.ok) throw new Error('PDF generation failed')
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Invoice-${invoiceNumber}.pdf`
+      a.click()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      alert('Error downloading PDF')
+    }
   }
 
   return (
@@ -108,8 +143,8 @@ const Finance = () => {
         {[
           { label: 'Total Revenue', value: `₹${(summary.totalRevenue || 0).toLocaleString()}`, color: 'text-green-600', bg: 'bg-green-50' },
           { label: 'Total Expenses', value: `₹${(summary.totalExpenses || 0).toLocaleString()}`, color: 'text-red-600', bg: 'bg-red-50' },
-          { label: 'Net Profit', value: `₹${(summary.profit || 0).toLocaleString()}`, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Pending Amount', value: `₹${(summary.pending || 0).toLocaleString()}`, color: 'text-yellow-600', bg: 'bg-yellow-50' },
+          { label: 'Net Profit', value: `₹${(summary.netProfit || 0).toLocaleString()}`, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: 'Pending Amount', value: `₹${(summary.totalPending || 0).toLocaleString()}`, color: 'text-yellow-600', bg: 'bg-yellow-50' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-200 p-4">
             <div className={`text-xs font-medium ${s.color} ${s.bg} px-2 py-1 rounded-md inline-block mb-2`}>{s.label}</div>
@@ -152,20 +187,32 @@ const Finance = () => {
                     <p className="font-medium text-gray-800">{inv.clientName}</p>
                     <p className="text-xs text-gray-400">{inv.clientEmail}</p>
                   </td>
-                  <td className="px-5 py-4 font-semibold text-gray-800">₹{inv.total.toLocaleString()}</td>
+                  <td className="px-5 py-4 font-semibold text-gray-800">
+                    ₹{(inv.totalAmount || inv.total || 0).toLocaleString()}
+                  </td>
                   <td className="px-5 py-4 text-gray-600">{new Date(inv.dueDate).toLocaleDateString('en-IN')}</td>
                   <td className="px-5 py-4">
                     <select value={inv.status} onChange={(e) => handleStatusChange(inv._id, e.target.value)}
-                      className={`text-xs font-medium px-2 py-1 rounded-full border-0 cursor-pointer ${statusColor[inv.status]}`}>
+                      className={`text-xs font-medium px-2 py-1 rounded-full border-0 cursor-pointer ${statusColor[inv.status] || statusColor.draft}`}>
                       <option value="draft">Draft</option>
                       <option value="sent">Sent</option>
                       <option value="paid">Paid</option>
                       <option value="overdue">Overdue</option>
+                      <option value="pending">Pending</option>
                     </select>
                   </td>
                   <td className="px-5 py-4">
-                    <button onClick={() => API.delete(`/finance/invoices/${inv._id}`).then(fetchAll)}
-                      className="text-red-500 hover:text-red-700 text-xs font-medium">Delete</button>
+                    <div className="flex gap-2 flex-wrap">
+                      <button
+                        onClick={() => downloadPDF(inv._id, inv.invoiceNumber)}
+                        className="text-blue-600 hover:text-blue-800 text-xs font-medium">
+                        📄 PDF
+                      </button>
+                      <button onClick={() => API.delete(`/finance/invoices/${inv._id}`).then(fetchAll)}
+                        className="text-red-500 hover:text-red-700 text-xs font-medium">
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -191,7 +238,9 @@ const Finance = () => {
               ) : expenses.map(exp => (
                 <tr key={exp._id} className="hover:bg-gray-50">
                   <td className="px-5 py-4 font-medium text-gray-800">{exp.title}</td>
-                  <td className="px-5 py-4"><span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">{exp.category}</span></td>
+                  <td className="px-5 py-4">
+                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">{exp.category}</span>
+                  </td>
                   <td className="px-5 py-4 font-semibold text-red-600">₹{Number(exp.amount).toLocaleString()}</td>
                   <td className="px-5 py-4 text-gray-600">{new Date(exp.date).toLocaleDateString('en-IN')}</td>
                   <td className="px-5 py-4 text-gray-600">{exp.paidBy}</td>
@@ -236,7 +285,7 @@ const Finance = () => {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700 block mb-1">Tax (%)</label>
-                  <input type="number" value={invoiceForm.tax}
+                  <input type="number" value={invoiceForm.tax} min="0" max="100"
                     onChange={e => setInvoiceForm({ ...invoiceForm, tax: Number(e.target.value) })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
                 </div>
@@ -250,10 +299,10 @@ const Finance = () => {
                     <input placeholder="Description" value={item.description}
                       onChange={e => updateItem(i, 'description', e.target.value)}
                       className="col-span-2 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-                    <input type="number" placeholder="Qty" value={item.quantity}
+                    <input type="number" placeholder="Qty" value={item.quantity} min="1"
                       onChange={e => updateItem(i, 'quantity', Number(e.target.value))}
                       className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-                    <input type="number" placeholder="Rate" value={item.rate}
+                    <input type="number" placeholder="Rate ₹" value={item.rate} min="0"
                       onChange={e => updateItem(i, 'rate', Number(e.target.value))}
                       className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
                   </div>
@@ -262,16 +311,25 @@ const Finance = () => {
                   className="text-primary text-sm font-medium hover:underline">+ Add Item</button>
               </div>
 
+              {/* Totals */}
               <div className="bg-gray-50 rounded-lg p-4 text-sm">
                 <div className="flex justify-between text-gray-600 mb-1">
                   <span>Subtotal</span><span>₹{subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between text-gray-600 mb-1">
-                  <span>Tax ({invoiceForm.tax}%)</span><span>₹{(subtotal * invoiceForm.tax / 100).toLocaleString()}</span>
+                  <span>Tax ({invoiceForm.tax}%)</span>
+                  <span>₹{(subtotal * invoiceForm.tax / 100).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between font-bold text-gray-800 border-t border-gray-200 pt-2 mt-2">
                   <span>Total</span><span>₹{total.toLocaleString()}</span>
                 </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1">Notes</label>
+                <textarea value={invoiceForm.notes} rows={2}
+                  onChange={e => setInvoiceForm({ ...invoiceForm, notes: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
               </div>
 
               <div className="flex gap-3">
@@ -312,7 +370,8 @@ const Finance = () => {
               ))}
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1">Category</label>
-                <select value={expenseForm.category} onChange={e => setExpenseForm({ ...expenseForm, category: e.target.value })}
+                <select value={expenseForm.category}
+                  onChange={e => setExpenseForm({ ...expenseForm, category: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
                   {['Salary', 'Rent', 'Utilities', 'Marketing', 'Travel', 'Equipment', 'Other'].map(c => (
                     <option key={c}>{c}</option>

@@ -10,6 +10,7 @@ import Settings from './pages/Settings'
 import MyProfile from './pages/MyProfile'
 import MyAttendance from './pages/MyAttendance'
 import ApplyLeave from './pages/ApplyLeave'
+import LeaveManagement from './pages/LeaveManagement'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
         <Route path="/inventory" element={<ProtectedRoute roles={['superadmin', 'admin']}><Inventory /></ProtectedRoute>} />
         <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+        <Route path="/leave-management" element={<ProtectedRoute roles={['superadmin', 'admin']}><LeaveManagement /></ProtectedRoute>} />
         <Route path="/my-profile" element={<ProtectedRoute roles={['staff']}><MyProfile /></ProtectedRoute>} />
         <Route path="/my-attendance" element={<ProtectedRoute roles={['staff']}><MyAttendance /></ProtectedRoute>} />
         <Route path="/apply-leave" element={<ProtectedRoute roles={['staff']}><ApplyLeave /></ProtectedRoute>} />
