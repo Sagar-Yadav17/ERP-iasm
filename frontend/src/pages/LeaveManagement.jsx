@@ -75,8 +75,10 @@ const LeaveManagement = () => {
             <p className="text-xs text-gray-500 mb-1">{s.label}</p>
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
           </div>
-        ))}<div className="flex gap-2 flex-wrap">
-        </div>
+        ))}
+      </div>
+      <div className="flex gap-2 flex-wrap">
+      </div>
 
         {/* Filter Tabs */}
         <div className="flex gap-2 mb-5 overflow-x-auto pb-1">

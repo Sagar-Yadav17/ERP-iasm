@@ -12,13 +12,17 @@ import MyAttendance from './pages/MyAttendance'
 import ApplyLeave from './pages/ApplyLeave'
 import LeaveManagement from './pages/LeaveManagement'
 import ProtectedRoute from './components/ProtectedRoute'
+import Register from './pages/Register'
+import Landing from './pages/Landing'
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/" element={<Navigate to="/landing" />} />
+        <Route path="/landing" element={<Landing />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/employees" element={<ProtectedRoute roles={['superadmin', 'admin']}><Employees /></ProtectedRoute>} />
         <Route path="/finance" element={<ProtectedRoute roles={['superadmin', 'admin']}><Finance /></ProtectedRoute>} />
@@ -37,3 +41,8 @@ function App() {
 }
 
 export default App
+
+
+// Routes mein add karo
+
+
