@@ -62,7 +62,7 @@ const ApplyLeave = () => {
         <p className="text-gray-500 text-sm mt-1">Submit and track your leave requests</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Apply Form */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="font-semibold text-gray-800 mb-4">New Leave Request</h2>
@@ -85,7 +85,7 @@ const ApplyLeave = () => {
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1">From Date</label>
                 <input type="date" value={form.fromDate} required
