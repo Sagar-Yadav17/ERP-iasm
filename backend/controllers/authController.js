@@ -61,17 +61,41 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
     const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ message: 'Invalid email or password' });
+    if (!user)
+      return res.status(401).json({ message: 'Invalid email or password' });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(401).json({ message: 'Invalid email or password' });
+    if (!isMatch)
+      return res.status(401).json({ message: 'Invalid email or password' });
+
+    const Settings = require('../models/Settings');
+
+    const settings = await Settings.findOne({
+      tenantId: user.tenantId
+    });
 
     const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
 
-    res.cookie('refreshToken', refreshToken, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.json({ accessToken, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    res.json({
+      accessToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        tenantId: user.tenantId,
+        companyName: settings?.companyName || 'Zubron ERP'
+      }
+    });
+
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

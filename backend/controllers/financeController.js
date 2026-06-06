@@ -17,14 +17,23 @@ exports.getInvoices = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
+console.log("NEW INVOICE LOGIC RUNNING");
 exports.createInvoice = async (req, res) => {
   try {
-    const count = await Invoice.countDocuments({
-      tenantId: req.user.tenantId
-    });
 
-    const invoiceNumber = `INV${String(count + 1).padStart(4, '0')}`;
+    const lastInvoice = await Invoice.findOne({
+      tenantId: req.user.tenantId
+    }).sort({ createdAt: -1 });
+
+    let invoiceNumber = 'INV0001';
+
+    if (lastInvoice) {
+      const lastNumber = parseInt(
+        lastInvoice.invoiceNumber.replace('INV', '')
+      );
+
+      invoiceNumber = `INV${String(lastNumber + 1).padStart(4, '0')}`;
+    }
 
     const invoice = await Invoice.create({
       ...req.body,

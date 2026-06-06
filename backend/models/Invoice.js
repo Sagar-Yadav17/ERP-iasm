@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const invoiceSchema = new mongoose.Schema({
   tenantId: { type: String, required: true },
-  invoiceNumber: { type: String, required: true, unique: true },
+  invoiceNumber: { type: String, required: true},
 
   clientName: { type: String, required: true },
   clientEmail: { type: String, required: true },

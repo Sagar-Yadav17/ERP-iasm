@@ -54,11 +54,17 @@ const Landing = () => {
             {/* Navbar */}
             <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100 px-6 py-4">
                 <div className="max-w-6xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    <div
+                        onClick={() => navigate('/landing')}
+                        className="flex items-center gap-2 cursor-pointer"
+                    >
                         <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                             <span className="text-white font-bold text-sm">Z</span>
                         </div>
-                        <span className="font-bold text-gray-800 text-lg">Zubron ERP</span>
+
+                        <span className="font-bold text-gray-800 text-lg hover:text-indigo-600 transition">
+                            Zubron ERP
+                        </span>
                     </div>
                     <div className="hidden md:flex items-center gap-8">
                         <a href="#features" className="text-sm text-gray-600 hover:text-indigo-600 transition">Features</a>
