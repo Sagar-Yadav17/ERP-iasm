@@ -22,12 +22,26 @@ exports.applyLeave = async (req, res) => {
       reason,
     });
 
+    // Notification create karo admin ke liye
+    try {
+      const Notification = require('../models/Notification');
+      await Notification.create({
+        tenantId: req.user.tenantId,
+        title: 'New Leave Request',
+        message: `${employee.name} applied for ${leaveType} leave (${days} days) — "${reason}"`,
+        type: 'leave',
+        icon: '🏖️',
+        link: '/leave-management',
+      });
+    } catch (e) {
+      console.error('Notification error:', e.message);
+    }
+
     res.status(201).json(leave);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
-
 exports.getMyLeaves = async (req, res) => {
   try {
     const employee = await Employee.findOne({ email: req.user.email, tenantId: req.user.tenantId });

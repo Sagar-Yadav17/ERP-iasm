@@ -43,14 +43,20 @@ exports.updateProfile = async (req, res) => {
 
 exports.changePassword = async (req, res) => {
   try {
+    const bcrypt = require('bcryptjs');
     const { currentPassword, newPassword } = req.body;
+    
     const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const isMatch = await user.matchPassword(currentPassword);
+    // Direct bcrypt compare
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Current password is incorrect' });
 
-    user.password = newPassword;
-    await user.save();
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    await User.findByIdAndUpdate(req.user._id, { password: hashedPassword });
 
     res.json({ message: 'Password changed successfully' });
   } catch (err) {
