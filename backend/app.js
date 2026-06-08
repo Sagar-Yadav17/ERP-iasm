@@ -30,4 +30,5 @@ app.use('/api/v1/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/v1/settings', require('./routes/settingsRoutes'));
 app.use('/api/v1/leave', require('./routes/leaveRoutes'));
 app.use('/api/v1/notifications', require('./routes/notificationRoutes'));
+app.use('/api/v1/payroll', require('./routes/payrollRoutes'));
 module.exports = app;
